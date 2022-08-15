@@ -1,0 +1,10 @@
+{
+    "$schema": "../CTAutocomplete/schema.json",
+    "name": "SkyblockCT",
+    "creator": "uhut",
+    "isRequired": true,
+    "version": "2.1.0",
+    "description": "Skyblock singeplayer in javascript CT",
+    "entry": "index.js"
+  }
+  

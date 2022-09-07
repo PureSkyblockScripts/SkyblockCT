@@ -4,7 +4,8 @@
     "creator": "uhut",
     "isRequired": true,
     "version": "2.1.0",
-    "description": "Skyblock singeplayer in javascript CT",
-    "entry": "index.js"
+    "description": "funny stormalpha cheat",
+    "entry": "index.js",
+    "requires": ["PogData", "RenderLib"]
   }
   

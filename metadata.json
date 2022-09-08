@@ -6,6 +6,6 @@
     "version": "2.1.0",
     "description": "funny stormalpha cheat",
     "entry": "index.js",
-    "requires": ["PogData", "RenderLib"]
+    "requires": ["PogData"]
   }
   

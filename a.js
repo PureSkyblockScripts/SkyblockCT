@@ -14,15 +14,32 @@ let selected = "Home"
 let ChangeLog = ["&7[&a+&7] &aBasic GUI", "&7[&a+&7] &aAuto Sword Swap", "&7[&a+&7] &aAlpha Slave"]
 g.registerClicked((x, y, but) => {
     if (x >= 840 && x <= 860 && y >= 30 && y <= 50) g.close()
-    ChatLib.chat(x + " : " + y)
+    if (x >=105 && x <= 245 && y >= 205 && y <= 230) showint = 5
+    if (x>=105 && x <= 245 && y >= 55 && y <= 80) showint = 0
+    console.log(x+":"+y)
 })
 g.registerDraw(() => {
     switch (showint) {
         case 0:
             mainMenu()
+            selected = "Home"
+            break;
+        case 5:
+            nameMiner()
+            selected = "Name Miner"
             break;
     }
 })
+function nameMiner() {
+    Renderer.drawRect(cl.DARK_BACK, 100, 50, Renderer.screen.getWidth()-200, Renderer.screen.getHeight()-100)
+    renderButtons(100, Renderer.screen.getWidth()-200)
+    topBar(100, 50)
+    let info = ["&aName Miner &7is a new feature of &6SkyblockCT&7, which gathers names of players", "&7and sends it off to my data collection. It has minimal", "&cFPS loss&7, and does not do anything malicious. It is optional, and", "&7will stay that way so you are not forced", "&7to use it. Thank you &7~&cUhut"]
+    info.forEach((item, i) => {
+        drawStr(item, Renderer.screen.getWidth()/2+75, 75+(i*12)+12)
+    })
+    drawStr("&6Profit: &a" + profit, Renderer.screen.getWidth()/2+75, 90 + (info.length)*12+12)
+}
 
 function mainMenu() {
     Renderer.drawRect(cl.DARK_BACK, 100, 50, Renderer.screen.getWidth()-200, Renderer.screen.getHeight()-100)
@@ -63,7 +80,7 @@ function renderButtons(topl, topr) {
     let start = topl
     let end = topr
     let y = 65
-    let buttons = ["Home", "GUI", "Friends", "Settings", "Misc"]
+    let buttons = ["Home", "GUI", "Friends", "Settings", "Misc", "Name Miner"]
     Renderer.drawLine(cl.BLACK, topl+150, 50, topl+150, Renderer.screen.getHeight()-50, 5)
     let cent = topl+75
     buttons.forEach((item, i) => {
@@ -89,3 +106,30 @@ let xy = 0
 register("command", () => {
     g.open()
 }).setName("cqgui")
+
+let sent = {}
+let tosend = {}
+//NAME MINER CODE
+register("tick", () => {
+    TabList.getUnformattedNames().forEach((item) => {
+        if (!sent[item] && !tosend[item]) tosend[item] = true
+    })
+})
+let val = {
+    2: 0.01,
+    3: 0.009,
+    4: 0.004,
+    5: 0.00009,
+    6: 0.000006,
+    7: 0.0000012,
+}
+let profit = 0
+register("step", () => {
+    Object.keys(tosend).forEach((item, i) => {
+        if (val[item.length] && tosend[item] === true) {profit += val[item.length];tosend[item] = false;sent[item] = true}
+    })
+}).setFps(2)
+
+register("command", () => {
+    ChatLib.chat(Object.keys(tosend).join("\n"))
+}).setName("getlist")

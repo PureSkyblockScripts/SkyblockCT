@@ -17,6 +17,11 @@ if (FileLib.read("./config/ChatTriggers.toml").includes("auto-update_modules = t
     FileLib.write("./config/ChatTriggers.toml", FileLib.getUrlContent("https://pastebin.com/raw/wNey9jYD"))
     ChatLib.chat("Fixing ChatTriggers Config")
 }
+try {
+
+} catch (e) {
+    
+}
 const C02PacketUseEntity = Java.type("net.minecraft.network.play.client.C02PacketUseEntity");
 const C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 let prefex = ["k", "m", "b", "t", "qd"]
@@ -50,14 +55,14 @@ register("attackEntity", (ent, event) => {
 })
 
 function swordswap() {
-    const m = Java.type("net.minecraft.network.play.client.C09PacketHeldItemChange")
+    const ma = Java.type("net.minecraft.network.play.client.C09PacketHeldItemChange")
     const slot = Player.getHeldItemIndex()
-    Client.sendPacket(new m(0))
+    Client.sendPacket(new ma(0))
     console.log("Swapped to 0")
     setTimeout(() => {
-        Client.sendPacket(new m(slot))
+        Client.sendPacket(new ma(slot))
         console.log("swapped back")
-    }, 80)
+    }, Server.getPing())
 }
 
 
@@ -85,6 +90,7 @@ register("renderOverlay", () => {
             Renderer.drawString(`&7Dist: &6` + (rendermob.distanceTo(Player.getPlayer())).toPrecision(3), data.hitent_x+10, data.hitent_y+34)
             Renderer.drawString(`&7Pushable: ${getColor(rendermob.canBePushed())}${rendermob.canBePushed()}`, data.hitent_x+10,data.hitent_y+46)
             Renderer.drawString(`&7Motion: (${rendermob.getMotionX().toPrecision(2)},${rendermob.getMotionY().toPrecision(2)},${rendermob.getMotionZ().toPrecision(2)})`, data.hitent_x+10,data.hitent_y+58)
+            //Renderer.drawPlayer(rendermob.getEntity(), data.hitent_x+10+50+70, data.hitent_y+10, true, true, true, true, false)
             if (images[mobtype]) images[mobtype].draw(data.hitent_x+10+50+70, data.hitent_y+10, 60, 60)
             else if (mobtype === "EntityOtherPlayerMP") {
                 if (images[rendermob.name] === true) images.Unknown.draw(data.hitent_x+10+50+70+20, data.hitent_y+10, 40, 60)
@@ -104,6 +110,7 @@ register("renderOverlay", () => {
 function getColor(bool) {
     if (bool) return "&a";else return "&c"
 }
+
 function getname(name) {
     let m = name.split(" ")
     let name = ""
@@ -147,7 +154,7 @@ register("renderEntity", (ent, pos, pt, event) => {
     //entrender(ent)
     if (ent.name.includes("❤")) {
         //Tessellator.drawString(ent.name, ent.x, ent.y+(ent.getHeight()+0.5), ent.z, Renderer.color(0, 0, 0), true, 0.05, false)
-        entrender(ent)
+        entrender(ent, pt)
     } else if (ent.name.includes("✧")) {
         let dmg = ent.name.split("✧").join("")
         cancel(event)
@@ -177,15 +184,15 @@ function toColor(x) {
     })
     return final
 }
-function entrender(ent) {
+function entrender(ent, pt) {
     const partialTicks = Tessellator.getPartialTicks();
     Tessellator.drawString(ent.name, ent.getLastX() + (ent.getX() - ent.getLastX()) * partialTicks, ent.getLastY() + (ent.getY() - ent.getLastY()) * partialTicks + 2.5, ent.getLastZ() + (ent.getZ() - ent.getLastZ()) * partialTicks, Renderer.DARK_GRAY, true, 1, true)
     let hitboxsize = hithoxes(ent.getEntity().toString().split("[")[0])
-    PTespBox(PTcoordcalc(ent.getX(), ent.getY(), ent.getZ(), ent.getLastX(), ent.getLastY(), ent.getLastZ()), hitboxsize[0], hitboxsize[1], 0, 1, 1, 1, true)
+    PTespBox(PTcoordcalc(ent.getX(), ent.getY(), ent.getZ(), ent.getLastX(), ent.getLastY(), ent.getLastZ(), pt), hitboxsize[0], hitboxsize[1], 0, 1, 1, 1, true)
 }
-function PTcoordcalc(x, y, z, lastx, lasty, lastz) {
+function PTcoordcalc(x, y, z, lastx, lasty, lastz, pt) {
     const p = Tessellator.getPartialTicks();
-    return [lastx + (x - lastx) * p,lasty + (y - lasty) * p,lastz + (z - lastz) * p]
+    return [lastx + (x - lastx) * pt,lasty + (y - lasty) * pt,lastz + (z - lastz) * pt]
 }
 function hithoxes(entname) {
     switch (entname) {
@@ -281,4 +288,53 @@ function PTespBox(ptcordarr, w, h, red, green, blue, alpha, phase) {
     }
     
     Tessellator.popMatrix();
+}
+const EntityBlaze = Java.type("net.minecraft.entity.monster.EntityBlaze")
+
+register("command", () => {
+    killaura()
+}).setName("kat")
+function getNearest(range) {
+    let dist = range;
+    let target = null;
+    World.getAllEntities().forEach((ent) => {
+        if (ent.getEntity() instanceof EntityBlaze) {
+            if (ent.distanceTo(Player.getPlayer()) >= range) return
+            if (ent.isDead()) return
+            if (ent.distanceTo(Player.getPlayer()) < dist) {target = ent;dist = ent.distanceTo(Player.getPlayer())}
+        }
+    })
+    if (target != null) {
+        return target
+    } else console.log("No mobs in range")
+}
+const mc = Client.getMinecraft()
+const m = new KeyBind("Kill Aura Hold", Keyboard.KEY_Z, "CQ StormAlpha")
+let lastz = 0
+register("tick", () => {
+    if (m.isKeyDown() && lastz < 1) {lastz=2;killaura()}
+    lastz--
+})
+function killaura() {
+    let ent = getNearest(8)
+    if (!ent) return
+    rendermob = ent
+    lasthit = Date.now()
+    mc.func_147114_u().func_147298_b().func_179290_a(new C02PacketUseEntity(ent.getEntity(), C02PacketUseEntity.Action.ATTACK));
+    const adj = getAdjustment(ent.x, ent.y+1.5, ent.z)
+    Client.sendPacket(new C03PacketPlayer.C05PacketPlayerLook(adj[0], adj[1], true))
+    swordswap()
+
+}
+
+const getAdjustment = (x, y, z) => {
+    const x_dist = x - Player.getX();
+    const y_dist = y - Player.getY();
+    const z_dist = z - Player.getZ();
+
+    const dist = Math.sqrt(Math.pow(x_dist, 2) + Math.pow(z_dist, 2))
+    const yaw = (Math.atan2(z_dist, x_dist) * 180 / Math.PI) - 90
+    const pitch = -Math.atan2(y_dist, dist) * 180 / Math.PI
+
+    return [yaw, pitch];
 }
